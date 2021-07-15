@@ -43,6 +43,6 @@ if __name__ == '__main__':
             traceback.print_exc()
 
 load_dotenv()
-token = os.environ['token']
+token = os.environ['TOKEN']
 
 bot.run(token)
