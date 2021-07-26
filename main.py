@@ -33,6 +33,12 @@ async def on_ready():
     # return await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='twitch.tv/tesseract_tv'))
     return await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name='Dofus'))
 
+@bot.event
+async def on_message(message):
+    if message.author != bot.user:
+        if 'd-bk.net' in message.content.lower():
+            await message.reply('What\'s that?! Try this: https://dofuslab.io')
+    await bot.process_commands(message)
 
 if __name__ == '__main__':
     for cog in cog_list:
