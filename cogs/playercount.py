@@ -3,6 +3,25 @@ from discord.ext import commands
 import asyncio
 import sqlite3
 
+def addToPlayers(guildID, channelID, value, *players):
+    db = sqlite3.connect('main.sqlite')
+    cursor = db.cursor()
+
+    for player in players:
+        player = str(player).title()
+        cursor.execute(f"SELECT count from wordcount WHERE guild_id={guildID} AND channel_id={channelID} AND msg='{player}'")
+        result = cursor.fetchone()
+        if result is None:
+            if (value < 1):
+                continue
+            cursor.execute(f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({guildID},{channelID},'{player}','{value}')")
+        else:
+            newval = result[0] + value
+            cursor.execute(f"UPDATE wordcount SET count={newval} WHERE guild_id={guildID} AND channel_id={channelID} AND msg='{player}'")
+    db.commit()
+    db.close()
+    return
+
 class PercMgt(commands.Cog):
 
     """Perc Management"""
@@ -34,103 +53,27 @@ class PercMgt(commands.Cog):
 
     @perc.command()
     async def add(self, ctx, *args):
-        db = sqlite3.connect('main.sqlite')
-        cursor = db.cursor()
-        for arg in args:
-            player = str(arg).title()
-            cursor.execute(f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-            result = cursor.fetchone()
-            if result is None:
-                cursor.execute(f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({ctx.guild.id},{ctx.channel.id},'{player}',1)")
-            else:
-                value = result[0] + 1
-                cursor.execute(f"UPDATE wordcount SET count={value} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-        db.commit()
-        db.close()
-        checkmark = self.bot.get_emoji(558322116685070378)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def win(self, ctx, *args):
-        db = sqlite3.connect('main.sqlite')
-        cursor = db.cursor()
-        for arg in args:
-            player = str(arg).title()
-            cursor.execute(
-                f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-            result = cursor.fetchone()
-            if result is None:
-                cursor.execute(
-                    f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({ctx.guild.id},{ctx.channel.id},'{player}',2)")
-            else:
-                value = result[0] + 2
-                cursor.execute(
-                    f"UPDATE wordcount SET count={value} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-        db.commit()
-        db.close()
-        checkmark = self.bot.get_emoji(558322116685070378)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 2, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def nodef(self, ctx, *args):
-        db = sqlite3.connect('main.sqlite')
-        cursor = db.cursor()
-        for arg in args:
-            player = str(arg).title()
-            cursor.execute(
-                f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-            result = cursor.fetchone()
-            if result is None:
-                cursor.execute(
-                    f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({ctx.guild.id},{ctx.channel.id},'{player}',1)")
-            else:
-                value = result[0] + 1
-                cursor.execute(
-                    f"UPDATE wordcount SET count={value} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-        db.commit()
-        db.close()
-        checkmark = self.bot.get_emoji(558322116685070378)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def loss(self, ctx, *args):
-        db = sqlite3.connect('main.sqlite')
-        cursor = db.cursor()
-        for arg in args:
-            player = str(arg).title()
-            cursor.execute(
-                f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-            result = cursor.fetchone()
-            if result is None:
-                cursor.execute(
-                    f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({ctx.guild.id},{ctx.channel.id},'{player}',1)")
-            else:
-                value = result[0] + 1
-                cursor.execute(
-                    f"UPDATE wordcount SET count={value} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-        db.commit()
-        db.close()
-        checkmark = self.bot.get_emoji(558322116685070378)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def minus(self, ctx, *args):
-        db = sqlite3.connect('main.sqlite')
-        cursor = db.cursor()
-        for arg in args:
-            player = str(arg).title()
-            cursor.execute(
-                f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-            result = cursor.fetchone()
-            if result is None:
-                continue
-            else:
-                value = result[0] - 1
-                cursor.execute(
-                    f"UPDATE wordcount SET count={value} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{player}'")
-        db.commit()
-        db.close()
-        checkmark = self.bot.get_emoji(558322116685070378)
+        addToPlayers(ctx.guild.id, ctx.channel.id, -1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
