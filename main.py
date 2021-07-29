@@ -6,6 +6,7 @@ import traceback
 import discord
 from discord.ext import commands, tasks
 import sqlite3
+import random
 
 from dotenv.main import load_dotenv
 # from dotenv import load_dotenv
@@ -34,9 +35,24 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.author != bot.user:
-        if 'd-bk.net' in message.content.lower():
-            await message.reply('What\'s that?! Try this: https://dofuslab.io')
+    if message.author == bot.user:
+        await bot.process_commands(message)
+        return
+    
+    lookingFor = ['d-bk.net', 'dofusbook.net']
+    replies = [
+        'What\'s that?! Try this: https://dofuslab.io',
+        '??? https://dofuslab.io',
+        'C\'mon man go for https://dofuslab.io',
+        'r u lost? ... https://dofuslab.io',
+        'you are so close bb... here try this: https://dofuslab.io',
+        'good attempt, but try this next time: https://dofuslab.io',
+        'BRO!!!!!! https://dofuslab.io',
+        'bruv ur slackin -> https://dofuslab.io',
+        'https://dofuslab.io'
+    ]
+    if any(x in message.content.lower() for x in lookingFor):
+        await message.reply(random.choice(replies))
     await bot.process_commands(message)
 
 if __name__ == '__main__':
