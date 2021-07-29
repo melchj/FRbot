@@ -17,7 +17,7 @@ class Help(commands.Cog):
             else:
                 embed = discord.Embed(title=f'Error in {ctx.command}',
                                       description=f'`{ctx.command.qualified_name} {ctx.command.signature}` \n{error}',
-                                      color=0x43780)
+                                      color=0xf5f2ca)
                 await ctx.send(embed=embed)
         except:
             embed = discord.Embed(title=f'Error in {ctx.command}', description=f'{error}',color=0xf5f2ca)
