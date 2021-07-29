@@ -22,7 +22,7 @@ def addToPlayers(guildID, channelID, value, *players):
     db.close()
     return
 
-class PercMgt(commands.Cog):
+class PercMgmt(commands.Cog):
     """Perc Management"""
 
     def __init__(self, bot, *args, **kwargs):
@@ -155,5 +155,5 @@ class PercMgt(commands.Cog):
             await ctx.send(embed=embed)
 
 def setup(bot):
-    bot.add_cog(PercMgt(bot))
+    bot.add_cog(PercMgmt(bot))
     print('perc is loaded')
