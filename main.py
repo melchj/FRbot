@@ -12,9 +12,10 @@ from dotenv.main import load_dotenv
 # from dotenv import load_dotenv
 
 bot = commands.Bot(command_prefix='.', case_insensitive=True)
-bot.remove_command('help')
+# bot.remove_command('help')
 
-cog_list = ['cogs.Core', 'cogs.playercount','cogs.help']
+# cog_list = ['cogs.Core', 'cogs.PercMgmt','cogs.help']
+cog_list = ['cogs.Core', 'cogs.PercMgmt']
 
 # Events
 

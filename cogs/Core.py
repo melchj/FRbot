@@ -14,21 +14,22 @@ class Core(commands.Cog):
     # Basic Ping Command
     @commands.command()
     async def ping(self, ctx):
+        '''Pong!'''
         await ctx.send(f'Pong! {round(self.bot.latency * 1000)}ms')
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def Jeff(self, ctx):
         embed = discord.Embed(color=0xf5f2ca)
         embed.add_field(name="Jeff", value='...is dumb')
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def Blity(self, ctx):
         embed = discord.Embed(color=0xf5f2ca)
         embed.add_field(name="Blity", value='...fuck blity')
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def krea(self, ctx):
         embed = discord.Embed(color=0xf5f2ca)
         embed.add_field(name="Krea", value='...is a commie')
