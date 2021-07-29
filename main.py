@@ -30,7 +30,6 @@ async def on_ready():
         )
         ''')
     print(f'Bot is Online logged in as {bot.user}')
-    # return await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='twitch.tv/tesseract_tv'))
     return await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name='Dofus'))
 
 @bot.event

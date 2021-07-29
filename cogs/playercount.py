@@ -23,7 +23,6 @@ def addToPlayers(guildID, channelID, value, *players):
     return
 
 class PercMgt(commands.Cog):
-
     """Perc Management"""
 
     def __init__(self, bot, *args, **kwargs):
@@ -101,6 +100,16 @@ class PercMgt(commands.Cog):
             await ctx.send(embed=embed)
 
     @perc.command()
+    async def backup(self, ctx):
+        if ctx.message.author.guild_permissions.manage_messages:
+            # await ctx.message.author.send('test')
+            # f = open('main.sqlite', 'rb')
+            await ctx.message.author.send(file=discord.File('main.sqlite'))
+            await ctx.message.add_reaction(emoji='✅')
+        else:
+            await ctx.message.add_reaction(emoji='‼')
+
+    @perc.command()
     async def reset(self,ctx):
         if ctx.message.author.guild_permissions.manage_messages:
             db = sqlite3.connect('main.sqlite')
@@ -109,8 +118,10 @@ class PercMgt(commands.Cog):
             db.commit()
             db.close()
             await ctx.send("Ah.. Yes Delete the proof of the 20% Winrate.")
+            await ctx.message.add_reaction(emoji='✅')
         else:
             await ctx.send("What are you a SYM spy?!")
+            await ctx.message.add_reaction(emoji='‼')
 
     @perc.command()
     async def edit(self, ctx, typoname, fixedname):
@@ -138,6 +149,7 @@ class PercMgt(commands.Cog):
                 cursor.execute(f"DELETE from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{typo}'")
             db.commit()
             db.close()
+            await ctx.message.add_reaction(emoji='✅')
         else:
             embed.add_field(name="You cannot do that", value='Ping Louk or some shit')
             await ctx.send(embed=embed)
