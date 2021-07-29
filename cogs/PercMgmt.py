@@ -31,52 +31,58 @@ class PercMgmt(commands.Cog):
         # Commands
     @commands.group(name='perc', invoke_without_command=True)
     async def perc(self, ctx):
-        """ .perc help for list of sub commands"""
+        """Do \".help perc\" for list of sub commands"""
         embed = discord.Embed(color=0xf5f2ca)
         embed.add_field(name='Perc Management', value='.perc help - for a list of Subcommands', inline=False)
         await ctx.send(embed=embed)
 
-    @perc.command()
-    async def help(self, ctx):
-        """list of Sub Commands"""
+    # @perc.command()
+    # async def help(self, ctx):
+    #     """list of Sub Commands"""
 
-        commands = self.bot.get_cog('PercMgt').get_commands()
+    #     commands = self.bot.get_cog('PercMgt').get_commands()
         
-        print([c.name for c in commands])
-        print([c.qualified_name for c in self.bot.get_cog('PercMgt').walk_commands()])
+    #     print([c.name for c in commands])
+    #     print([c.qualified_name for c in self.bot.get_cog('PercMgt').walk_commands()])
 
-        for c in self.bot.get_cog('PercMgt').get_commands():
-            print(f'{c}')
-            await ctx.send("bruh idk check the pinned messages maybe help is in there")
+    #     for c in self.bot.get_cog('PercMgt').get_commands():
+    #         print(f'{c}')
+    #         await ctx.send("bruh idk check the pinned messages maybe help is in there")
 
 
     @perc.command()
     async def add(self, ctx, *args):
+        '''Adds 1 point.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def win(self, ctx, *args):
+        '''Adds 2 points. For perc def/attack 5v5 wins.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 2, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def nodef(self, ctx, *args):
+        '''Adds 1 point. For def/attack 5vX wins.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def loss(self, ctx, *args):
+        '''Adds 1 point. For def/attack 5v5 losses.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def minus(self, ctx, *args):
+        '''Subtracts 1 point.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, -1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def list(self, ctx):
+        '''Lists the current leaderboard for the channel.'''
         db = sqlite3.connect('main.sqlite')
         cursor = db.cursor()
         cursor.execute(f"SELECT msg, count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} ORDER BY count DESC")
@@ -101,9 +107,8 @@ class PercMgmt(commands.Cog):
 
     @perc.command()
     async def backup(self, ctx):
+        '''dev command (mod only)'''
         if ctx.message.author.guild_permissions.manage_messages:
-            # await ctx.message.author.send('test')
-            # f = open('main.sqlite', 'rb')
             await ctx.message.author.send(file=discord.File('main.sqlite'))
             await ctx.message.add_reaction(emoji='✅')
         else:
@@ -111,6 +116,7 @@ class PercMgmt(commands.Cog):
 
     @perc.command()
     async def reset(self,ctx):
+        '''Resets the leaderboard for this channel. (mod only)'''
         if ctx.message.author.guild_permissions.manage_messages:
             db = sqlite3.connect('main.sqlite')
             cursor = db.cursor()
@@ -125,6 +131,7 @@ class PercMgmt(commands.Cog):
 
     @perc.command()
     async def edit(self, ctx, typoname, fixedname):
+        '''Fix a mispelled name. \".perc edit <typoName> <correctedName>\"'''
         embed = discord.Embed(color=0xf5f2ca)
         if ctx.message.author.guild_permissions.manage_messages:
             db = sqlite3.connect('main.sqlite')
