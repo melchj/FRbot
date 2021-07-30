@@ -17,6 +17,21 @@ bot = commands.Bot(command_prefix='.', case_insensitive=True)
 # cog_list = ['cogs.Core', 'cogs.PercMgmt','cogs.help']
 cog_list = ['cogs.Core', 'cogs.PercMgmt']
 
+def main():
+    # load in the cogs
+    for cog in cog_list:
+        try:
+            bot.load_extension(cog)
+        except Exception as e:
+            print(f'Failed to load cog {cog}', file=sys.stderr)
+            traceback.print_exc()
+    
+    # read the token from the .env file and start the bot
+    load_dotenv()
+    token = os.environ['TOKEN']
+    bot.run(token)
+
+
 # Events
 
 @bot.event
@@ -57,14 +72,4 @@ async def on_message(message):
     await bot.process_commands(message)
 
 if __name__ == '__main__':
-    for cog in cog_list:
-        try:
-            bot.load_extension(cog)
-        except Exception as e:
-            print(f'Failed to load cog {cog}', file=sys.stderr)
-            traceback.print_exc()
-
-load_dotenv()
-token = os.environ['TOKEN']
-
-bot.run(token)
+    main()
