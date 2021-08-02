@@ -12,7 +12,7 @@ def addToPlayers(guildID, channelID, value, *players):
         cursor.execute(f"SELECT count from wordcount WHERE guild_id={guildID} AND channel_id={channelID} AND msg='{player}'")
         result = cursor.fetchone()
         if result is None:
-            if (value < 1):
+            if (value <= 0):
                 continue
             cursor.execute(f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({guildID},{channelID},'{player}','{value}')")
         else:
@@ -33,7 +33,7 @@ class PercMgmt(commands.Cog):
     async def perc(self, ctx):
         """Do \".help perc\" for list of sub commands"""
         embed = discord.Embed(color=0xf5f2ca)
-        embed.add_field(name='Perc Management', value='.perc help - for a list of Subcommands', inline=False)
+        embed.add_field(name='Perc Management', value='.help perc - for a list of Subcommands', inline=False)
         await ctx.send(embed=embed)
 
     # @perc.command()
@@ -64,9 +64,14 @@ class PercMgmt(commands.Cog):
 
     @perc.command()
     async def nodef(self, ctx, *args):
-        '''Adds 1 point. For def/attack 5vX wins.'''
-        addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
-        await ctx.message.add_reaction(emoji='✅')
+        '''Adds 0.5 points. For attacks only with 5vX wins.'''
+        # TODO: don't have that perc-attack channel ID# (802368659678167050) hardcoded in, and add commands to edit what channels certain commands are in
+        # only let this command work in specific channel
+        if ctx.channel.id == 802368659678167050:
+            addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+            await ctx.message.add_reaction(emoji='✅')
+        else:
+            await ctx.send('nodef does not work in this channel :(')
 
     @perc.command()
     async def loss(self, ctx, *args):
