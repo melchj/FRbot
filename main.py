@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands, tasks
 import sqlite3
 import random
+from datetime import datetime
 
 from dotenv.main import load_dotenv
 # from dotenv import load_dotenv
@@ -51,10 +52,11 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.author == bot.user:
-        await bot.process_commands(message)
+    # ignore message if it comes from this bot
+    if message.author.id == bot.user.id:
         return
     
+    # reply if someone mentioned dofusbook instead of dofuslab
     lookingFor = ['d-bk.net', 'dofusbook.net']
     replies = [
         'What\'s that?! Try this: https://dofuslab.io',
@@ -69,6 +71,22 @@ async def on_message(message):
     ]
     if any(x in message.content.lower() for x in lookingFor):
         await message.reply(random.choice(replies))
+    
+    # save images attached to messages (https://discordpy.readthedocs.io/en/stable/api.html?highlight=message#discord.Attachment)
+    # this is designed to be for saving all 5v5 screenshots, for later analysis
+    # TODO: this should only be active in some channels
+    extensions = ['.png', '.jpg', '.jpeg']
+    for attachment in message.attachments:
+        if attachment.filename.endswith(tuple(extensions)):
+            # formatting the message send datetime to ISO 8601 for file name
+            formattedDatetime = datetime.strftime(message.created_at, '%Y%m%dT%H%M%SZ')
+            # print(formattedDatetime)
+            # TODO: deal with potential exceptions from attachment.save (see docs)
+            # TODO: save it in the right format (png/jpeg/jpg) (https://stackoverflow.com/questions/62375567/how-to-check-for-file-extension-in-discord-py)
+            # TODO: maybe have different directories for each channel?
+            await attachment.save(f'output/{formattedDatetime}.png', use_cached=True)
+
+    # process all other commands
     await bot.process_commands(message)
 
 if __name__ == '__main__':
