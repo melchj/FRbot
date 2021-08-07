@@ -7,15 +7,11 @@ import discord
 from discord.ext import commands, tasks
 import sqlite3
 import random
-
 from dotenv.main import load_dotenv
-# from dotenv import load_dotenv
 
 bot = commands.Bot(command_prefix='.', case_insensitive=True)
-# bot.remove_command('help')
 
-# cog_list = ['cogs.Core', 'cogs.PercMgmt','cogs.help']
-cog_list = ['cogs.Core', 'cogs.PercMgmt']
+cog_list = ['cogs.Core', 'cogs.PercMgmt', 'cogs.Tingo']
 
 def main():
     # load in the cogs
@@ -36,6 +32,7 @@ def main():
 
 @bot.event
 async def on_ready():
+    # create sqlite3 main database (for perc point scorekeeping)
     db = sqlite3.connect('main.sqlite')
     cursor = db.cursor()
     cursor.execute('''
@@ -46,6 +43,21 @@ async def on_ready():
         count INT
         )
         ''')
+    # TODO: are the above datatypes correct? it seems to work regardless??
+
+    # create sqlite3 tingo database
+    db2 = sqlite3.connect('tingo.sqlite')
+    cursor2 = db2.cursor()
+    cursor2.execute('''
+        CREATE TABLE IF NOT EXISTS tingodex(
+        guild_id INT,
+        channel_id INT,
+        trainer_id INT,
+        victim_name TEXT,
+        image_path TEXT
+        )
+        ''')
+
     print(f'Bot is Online logged in as {bot.user}')
     return await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name='Dofus'))
 
@@ -69,6 +81,7 @@ async def on_message(message):
     ]
     if any(x in message.content.lower() for x in lookingFor):
         await message.reply(random.choice(replies))
+
     await bot.process_commands(message)
 
 if __name__ == '__main__':

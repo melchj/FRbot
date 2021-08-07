@@ -28,7 +28,7 @@ class PercMgmt(commands.Cog):
     def __init__(self, bot, *args, **kwargs):
         self.bot = bot
 
-        # Commands
+    # Commands
     @commands.group(name='perc', invoke_without_command=True)
     async def perc(self, ctx):
         """Do \".help perc\" for list of sub commands"""
