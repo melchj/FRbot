@@ -20,18 +20,16 @@ class Tingo(commands.Cog):
 
     @commands.group(name='tingo', invoke_without_command=True)
     async def tingo(self, ctx, *args):
-        print('tingo called without subcommand!!! do \".help tingo\" for subcommands')
+        await ctx.send('tingo called without subcommand!!! do \".help tingo\" for subcommands')
         return
     
     @tingo.command()
     async def capture(self, ctx, *args):
         '''Gotta Catch \'em All! (use this command when u tingo someone. attach screenshot (.png) to message.)'''
-        # print('tingooooo')
 
         # cancel if not exactly one attachment
         if (len(ctx.message.attachments) != 1):
-            # TODO: bot response
-            print('ERROR: .tingo capture needs exactly one image attached!')
+            await ctx.send('ERROR: .tingo capture needs exactly one image attached!')
             return
 
         # save attached image (if it's a png... error if not)
@@ -43,8 +41,7 @@ class Tingo(commands.Cog):
             await attachment.save(imgPath)
             print(f'attachment saved to {imgPath}')
         else:
-            # TODO: bot response
-            print('Chonk is lazy, this currently only works if attachment is png file...')
+            await ctx.send('ERROR: Chonk is lazy, this currently only works if the attached screenshot is a png file...')
             return
         
         # add to database
@@ -62,33 +59,87 @@ class Tingo(commands.Cog):
         db.close()
         await ctx.message.add_reaction(emoji='✅')
     
+    # TODO: this command should probably be modified so bot doesn't get rate limited if someone has too many tingos to list (https://discord.com/developers/docs/topics/rate-limits)
     @tingo.command()
     async def list(self, ctx, *args):
+        '''See a list of all the people you've tingo\'d!'''
         # ".tingo list" -- send a list of all the different people (names) this person has captured
         db = sqlite3.connect('tingo.sqlite')
         cursor = db.cursor()
 
-        # list all UNIQUE victims of this trainer on this discord server
-        cursor.execute(f"SELECT DISTINCT victim_name from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id}")
-        result = cursor.fetchall()
-        print(result)
+        if (len(args) == 0):
+            # list all UNIQUE victims of this trainer on this discord server
+            cursor.execute(f"SELECT DISTINCT victim_name from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id}")
+            result = cursor.fetchall()
+            print(result)
 
-        if not result:
-            await ctx.send('No results! You haven\'t captured anything?')
+            if not result:
+                await ctx.send('No results! You haven\'t captured anything?')
+            else:
+                embed = discord.Embed(color=0xf5f2ca) # TODO: make this a tingo-esque color
+                victims = ''
+                for value in result:
+                    victims = victims + str(value[0]) + '\n'
+                embed.add_field(name=f'{ctx.message.author.display_name}\'s Tingo Victims', value=victims, inline=True)
+                embed.set_author(name='Free Ring Tingos', icon_url=f'{ctx.guild.icon_url}')
+                embed.set_footer(text='Do \".tingo list all\" or \".tingo list <name>\"for more!')
+                embed.set_thumbnail(url=f'{ctx.guild.icon_url}') # TODO: make this a tingo icon?
+
+                await ctx.send(embed=embed)
+        elif (args[0].lower() == 'all'):
+            # show all capture screenshots for all victims (max 10? for now)
+            await ctx.send('Here are your most recent tingos!')
+            cursor.execute(f"SELECT DISTINCT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id}")
+            result = cursor.fetchall()
+
+            print(result)
+            max = 10
+            i = 0
+            for capture in reversed(result):
+                i = i + 1
+                if i > max:
+                    continue
+                victim = str(capture[0])
+                imagePath = str(capture[1])
+                fileName = imagePath.split('/')[1]
+                # TODO: format that date better... (below)
+                embed = discord.Embed(color=0xf5f2ca, title=f"Tingo'd {victim} on {fileName[0:4]} {fileName[4:6]} {fileName[6:8]}")
+                file = discord.File(imagePath)
+                embed.set_image(url=f"attachment://{file.filename}")
+                embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
+
+                await ctx.send(file=file, embed=embed)
         else:
-            embed = discord.Embed(color=0xf5f2ca) # TODO: make a tingo-esque color
-            victims = ''
-            for value in result:
-                victims = victims + str(value[0]) + '\n'
-            embed.add_field(name=f'{ctx.message.author.display_name}\'s Tingo Victims', value=victims, inline=True)
-            embed.set_author(name='Free Ring Tingos', icon_url=f'{ctx.guild.icon_url}')
-            embed.set_footer(text='Do \".tingo show <victim>\" for more info!')
-            embed.set_thumbnail(url=f'{ctx.guild.icon_url}') # TODO: make this a tingo icon?
+            # show all capture screenshots for the victim(s) named
+            for victim in args:
+                victim = str(victim).title()
+                cursor.execute(f"SELECT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id} AND victim_name='{victim}'")
+                result = cursor.fetchall()
 
-            await ctx.send(embed=embed)
-        # TODO: show the tingo pictures? only a certain number of pictures?
-        # TODO: have a ".tingo list <name>" command to show all the pictures for that person?
-        # or are the above just for 
+                # no results for this victim name, skip to next
+                if len(result) == 0:
+                    print('no results found')
+                    await ctx.send('ERROR: no results found?')
+                    break
+
+                print(result)
+                # victimName = result[0][0]
+                plurality = ''
+                if len(result) > 1:
+                    plurality = 's'
+                await ctx.send(f"You have tingo'd {victim} {len(result)} time{plurality}!")
+
+                # loop through each capture event and send a the picture
+                for capture in result:
+                    imagePath = capture[1]
+                    fileName = imagePath.split('/')[1]
+                    # TODO: format that date better... (below)
+                    embed = discord.Embed(color=0xf5f2ca, title=f"Tingo'd {victim} on {fileName[0:4]} {fileName[4:6]} {fileName[6:8]}")
+                    file = discord.File(imagePath)
+                    embed.set_image(url=f"attachment://{file.filename}")
+                    embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
+
+                    await ctx.send(file=file, embed=embed)
 
     # TODO: add a ".tingo backup" command, just like .perc backup? tho what to do with images...?
 
