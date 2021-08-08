@@ -114,6 +114,5 @@ dmypy.json
 .pyre/
 
 
-
 # custom stuff:
-main.sqlite
+*.sqlite
