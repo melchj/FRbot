@@ -147,6 +147,7 @@ class Tingo(commands.Cog):
 
         else:
             # show all capture screenshots for the victim(s) named
+            picsSent = 0
             for victim in args:
                 victim = str(victim).title()
                 cursor.execute(f"SELECT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id} AND victim_name='{victim}'")
@@ -167,6 +168,9 @@ class Tingo(commands.Cog):
 
                 # loop through each capture event and send a the picture
                 for capture in result:
+                    if (picsSent > maxImages):
+                        print('trying to send too many pics!!!')
+                        break
                     imagePath = capture[1]
                     fileName = imagePath.split('/')[1]
                     # TODO: format that date better... (below)
@@ -178,6 +182,7 @@ class Tingo(commands.Cog):
                     embed.set_thumbnail(url="attachment://larval.png")
 
                     await ctx.send(files=(screenshotFile, thumbnailFile), embed=embed)
+                    picsSent = picsSent + 1
 
     # TODO: add a ".tingo backup" command, just like .perc backup? tho what to do with images...? idk
 
