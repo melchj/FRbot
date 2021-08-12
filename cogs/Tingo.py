@@ -59,7 +59,6 @@ class Tingo(commands.Cog):
         db.close()
         await ctx.message.add_reaction(emoji='✅')
     
-    # TODO: this command should probably be modified so bot doesn't get rate limited if someone has too many tingos to list (https://discord.com/developers/docs/topics/rate-limits)
     @tingo.command()
     async def list(self, ctx, *args):
         '''See a list of all the people you've tingo\'d! Also try ".tingo list <name>" to see who other people have tingo\'d!'''
@@ -83,7 +82,7 @@ class Tingo(commands.Cog):
                     victims = victims + str(value[0]) + '\n'
                 embed.add_field(name='Tingo Victims', value=victims, inline=True)
                 embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
-                embed.set_footer(text='Do \".tingo list all\" or \".tingo list <name>\"for more!')
+                embed.set_footer(text='Try \".tingo show\"!')
                 thumbnailFile = discord.File("res/larval.png", filename="larval.png") # TODO: tbh there's probably a better way to attach a local file to embed object? idk
                 embed.set_thumbnail(url="attachment://larval.png")
 
@@ -106,70 +105,79 @@ class Tingo(commands.Cog):
                         print(value)
                     embed.add_field(name='Tingo Victims', value=victims, inline=True)
                     embed.set_author(name=member.name, icon_url=member.avatar_url)
-                    embed.set_footer(text='Do \".tingo list all\" or \".tingo list <name>\"for more!')
+                    embed.set_footer(text='Try \".tingo show\"!')
                     thumbnailFile = discord.File("res/larval.png", filename="larval.png") # TODO: tbh there's probably a better way to attach a local file to embed object? idk
                     embed.set_thumbnail(url="attachment://larval.png")
 
                     await ctx.send(embed=embed, file=thumbnailFile)
 
-        # elif (args[0].lower() == 'all'):
-        #     # show all capture screenshots for all victims (max 10? for now)
-        #     await ctx.send('Here are your most recent tingos!')
-        #     cursor.execute(f"SELECT DISTINCT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id}")
-        #     result = cursor.fetchall()
+    @tingo.command()
+    async def show(self, ctx, *args):
+        """See the tingo screenshots!!"""
+        db = sqlite3.connect('tingo.sqlite')
+        cursor = db.cursor()
 
-        #     print(result)
-        #     max = 10
-        #     i = 0
-        #     for capture in reversed(result):
-        #         i = i + 1
-        #         if i > max:
-        #             continue
-        #         victim = str(capture[0])
-        #         imagePath = str(capture[1])
-        #         fileName = imagePath.split('/')[1]
-        #         # TODO: format that date better... (below)
-        #         embed = discord.Embed(color=0xec942a, title=f"Tingo'd {victim} on {fileName[0:4]} {fileName[4:6]} {fileName[6:8]}")
-        #         screenshotFile = discord.File(imagePath)
-        #         embed.set_image(url=f"attachment://{screenshotFile.filename}")
-        #         embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
-        #         thumbnailFile = discord.File("res/larval.png", filename="larval.png") # TODO: tbh there's probably a better way to attach a local file to embed object? idk
-        #         embed.set_thumbnail(url="attachment://larval.png")
+        maxImages = 10 # max number of pictures to send... TODO: probably a better way to limit this
 
-        #         await ctx.send(files=(screenshotFile, thumbnailFile), embed=embed)
-        # else:
-        #     # show all capture screenshots for the victim(s) named
-        #     for victim in args:
-        #         victim = str(victim).title()
-        #         cursor.execute(f"SELECT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id} AND victim_name='{victim}'")
-        #         result = cursor.fetchall()
+        if (len(args) == 0):
+            # no arguments, show all recent captures for all tingo victims
+            await ctx.send('Here are your most recent tingos!')
+            cursor.execute(f"SELECT DISTINCT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id}")
+            result = cursor.fetchall()
 
-        #         # no results for this victim name, skip to next
-        #         if len(result) == 0:
-        #             print('no results found')
-        #             await ctx.send('ERROR: no results found?')
-        #             break
+            print(result)
+            i = 0
+            # TODO: the "most recent" order kind of depends on how the database is ordered... perhaps the database should store the date captured (currently date is stored in file name of images)
+            for capture in reversed(result):
+                i = i + 1
+                if i > maxImages:
+                    continue
+                victim = str(capture[0])
+                imagePath = str(capture[1])
+                fileName = imagePath.split('/')[1]
+                # TODO: format that date better... (below)
+                embed = discord.Embed(color=0xec942a, title=f"Tingo'd {victim} on {fileName[0:4]} {fileName[4:6]} {fileName[6:8]}")
+                screenshotFile = discord.File(imagePath)
+                embed.set_image(url=f"attachment://{screenshotFile.filename}")
+                embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
+                thumbnailFile = discord.File("res/larval.png", filename="larval.png") # TODO: tbh there's probably a better way to attach a local file to embed object? idk
+                embed.set_thumbnail(url="attachment://larval.png")
 
-        #         print(result)
-        #         # victimName = result[0][0]
-        #         plurality = ''
-        #         if len(result) > 1:
-        #             plurality = 's'
-        #         await ctx.send(f"You have tingo'd {victim} {len(result)} time{plurality}!")
+                await ctx.send(files=(screenshotFile, thumbnailFile), embed=embed)
 
-        #         # loop through each capture event and send a the picture
-        #         for capture in result:
-        #             imagePath = capture[1]
-        #             fileName = imagePath.split('/')[1]
-        #             # TODO: format that date better... (below)
-        #             embed = discord.Embed(color=0xec942a, title=f"Tingo'd {victim} on {fileName[0:4]} {fileName[4:6]} {fileName[6:8]}")
-        #             screenshotFile = discord.File(imagePath)
-        #             embed.set_image(url=f"attachment://{screenshotFile.filename}")
-        #             embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
-        #             thumbnailFile = discord.File("res/larval.png", filename="larval.png") # TODO: tbh there's probably a better way to attach a local file to embed object? idk
-        #             embed.set_thumbnail(url="attachment://larval.png")
+        else:
+            # show all capture screenshots for the victim(s) named
+            for victim in args:
+                victim = str(victim).title()
+                cursor.execute(f"SELECT victim_name, image_path from tingodex WHERE guild_id={ctx.guild.id} AND trainer_id={ctx.message.author.id} AND victim_name='{victim}'")
+                result = cursor.fetchall()
 
-        #             await ctx.send(files=(screenshotFile, thumbnailFile), embed=embed)
+                # no results for this victim name, skip to next
+                if len(result) == 0:
+                    print('no results found')
+                    await ctx.send('ERROR: no results found?')
+                    break
+
+                print(result)
+                # victimName = result[0][0]
+                plurality = ''
+                if len(result) > 1:
+                    plurality = 's'
+                await ctx.send(f"You have tingo'd {victim} {len(result)} time{plurality}!")
+
+                # loop through each capture event and send a the picture
+                for capture in result:
+                    imagePath = capture[1]
+                    fileName = imagePath.split('/')[1]
+                    # TODO: format that date better... (below)
+                    embed = discord.Embed(color=0xec942a, title=f"Tingo'd {victim} on {fileName[0:4]} {fileName[4:6]} {fileName[6:8]}")
+                    screenshotFile = discord.File(imagePath)
+                    embed.set_image(url=f"attachment://{screenshotFile.filename}")
+                    embed.set_author(name=ctx.message.author.name, icon_url=ctx.message.author.avatar_url)
+                    thumbnailFile = discord.File("res/larval.png", filename="larval.png") # TODO: tbh there's probably a better way to attach a local file to embed object? idk
+                    embed.set_thumbnail(url="attachment://larval.png")
+
+                    await ctx.send(files=(screenshotFile, thumbnailFile), embed=embed)
 
     # TODO: add a ".tingo backup" command, just like .perc backup? tho what to do with images...? idk
 
