@@ -37,13 +37,14 @@ async def on_ready():
     cursor = db.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS wordcount(
-        guild_id TEXT,
-        msg TEXT,
-        channel_id TEXT,
-        count INT
+        guild_id INT,
+        channel_id INT,
+        player TEXT,
+        wins INT,
+        loses INT,
+        no_contests INT
         )
         ''')
-    # TODO: are the above datatypes correct? it seems to work regardless??
 
     # create sqlite3 tingo database
     db2 = sqlite3.connect('tingo.sqlite')
