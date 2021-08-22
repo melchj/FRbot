@@ -50,39 +50,52 @@ class PercMgmt(commands.Cog):
     #         await ctx.send("bruh idk check the pinned messages maybe help is in there")
 
 
-    @perc.command()
-    async def add(self, ctx, *args):
-        '''Adds 1 point.'''
-        addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
-        await ctx.message.add_reaction(emoji='✅')
+    # @perc.command()
+    # async def add(self, ctx, *args):
+    #     '''Adds 1 point.'''
+    #     addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
+    #     await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def win(self, ctx, *args):
-        '''Adds 2 points. For perc def/attack 5v5 wins.'''
+        '''For perc def/attack 5v5 wins. Worth the most points.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 2, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
-    async def nodef(self, ctx, *args):
-        '''Adds 0.5 points. For attacks only with 5vX wins.'''
-        # TODO: don't have that perc-attack channel ID# (802368659678167050) hardcoded in, and add commands to edit what channels certain commands are in
-        # only let this command work in specific channel
-        if ctx.channel.id == 802368659678167050:
-            addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
-            await ctx.message.add_reaction(emoji='✅')
-        else:
-            await ctx.send('nodef does not work in this channel :(')
-
-    @perc.command()
     async def loss(self, ctx, *args):
-        '''Adds 1 point. For def/attack 5v5 losses.'''
+        '''For def/attack 5v5 losses. Worth slightly less points than a win.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
-    async def minus(self, ctx, *args):
-        '''Subtracts 1 point.'''
-        addToPlayers(ctx.guild.id, ctx.channel.id, -1, *args)
+    async def noContest(self, ctx, *args):
+        '''For attacks with 5vX wins.'''
+        addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        await ctx.message.add_reaction(emoji='✅')
+
+    # @perc.command()
+    # async def minus(self, ctx, *args):
+    #     '''Subtracts 1 point.'''
+    #     addToPlayers(ctx.guild.id, ctx.channel.id, -1, *args)
+    #     await ctx.message.add_reaction(emoji='✅')
+
+    @perc.command()
+    async def removeWin(self, ctx, *args):
+        '''To remove a 5v5 win.'''
+        # addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        await ctx.message.add_reaction(emoji='✅')
+
+    @perc.command()
+    async def removeLoss(self, ctx, *args):
+        '''To remove a 5v5 loss.'''
+        # addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        await ctx.message.add_reaction(emoji='✅')
+    
+    @perc.command()
+    async def removeNoContest(self, ctx, *args):
+        '''To remove a 5vX win.'''
+        # addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
