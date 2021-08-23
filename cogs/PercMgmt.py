@@ -22,13 +22,16 @@ def addToPlayers(guildID, channelID, category:str, value:int, *players):
         player = str(player).title()
         cursor.execute(f"SELECT {category} from percscore WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
         result = cursor.fetchone()
+
         # if nothing is found in database, it must be because this player name hasn't been added... so insert it with 0s 
         if result is None:
             cursor.execute(f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({guildID},{channelID},'{player}',0,0,0)")
+            newValue = value
+
         # if something is found, calculate the new value to update to
         else:
             newValue = result[0] + value
-        # keep value >= 0
+        # dont let the database get a negative
         if newValue < 0:
             newValue = 0
         # update the value in the database
@@ -50,26 +53,6 @@ class PercMgmt(commands.Cog):
         embed = discord.Embed(color=0xf5f2ca)
         embed.add_field(name='Perc Management', value='.help perc - for a list of Subcommands', inline=False)
         await ctx.send(embed=embed)
-
-    # @perc.command()
-    # async def help(self, ctx):
-    #     """list of Sub Commands"""
-
-    #     commands = self.bot.get_cog('PercMgt').get_commands()
-        
-    #     print([c.name for c in commands])
-    #     print([c.qualified_name for c in self.bot.get_cog('PercMgt').walk_commands()])
-
-    #     for c in self.bot.get_cog('PercMgt').get_commands():
-    #         print(f'{c}')
-    #         await ctx.send("bruh idk check the pinned messages maybe help is in there")
-
-
-    # @perc.command()
-    # async def add(self, ctx, *args):
-    #     '''Adds 1 point.'''
-    #     addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
-    #     await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def win(self, ctx, *args):
@@ -107,26 +90,31 @@ class PercMgmt(commands.Cog):
         addToPlayers(ctx.guild.id, ctx.channel.id, 'nocontest', -1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
-    # TODO: need to fix command with new database format
     @perc.command()
     async def list(self, ctx):
         '''Lists the current leaderboard for the channel.'''
         db = sqlite3.connect('main.sqlite')
         cursor = db.cursor()
-        cursor.execute(f"SELECT msg, count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} ORDER BY count DESC")
+        # get everything from the database
+        cursor.execute(f"SELECT player, win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} ORDER BY win DESC")
         result = cursor.fetchall()
-        print(result)
         if not result:
             await ctx.send('There is no Data for this channel')
         else:
             embed = discord.Embed(color=0xf5f2ca)
-            player = ''
-            count = ''
+            # loop through everything returned from DB and calculate score per player
+            entries = dict()
             for value in result:
-                player = player + str(value[0]) + '\n'
-                count = count + str(value[1]) + '\n'
-            embed.add_field(name='Player', value=player, inline=True)
-            embed.add_field(name='Count', value=count, inline=True)
+                entries[value[0]] = value[1]*2 + value[2]*1 + value[3]*0.5
+            
+            # loop through the entries IN DESCENDING ORDER and make the strings to send
+            players = ''
+            scores = ''
+            for key in sorted(entries, key=entries.get, reverse=True):
+                players = players + key + '\n'
+                scores = scores + str(entries[key]) + '\n'
+            embed.add_field(name='Player', value=players, inline=True)
+            embed.add_field(name='Score', value=scores, inline=True)
             embed.set_author(name='Free Ring Tings', icon_url=f'{ctx.guild.icon_url}')
             embed.set_footer(text='#FOKSYM')
             embed.set_thumbnail(url=f'{ctx.guild.icon_url}')
@@ -142,14 +130,13 @@ class PercMgmt(commands.Cog):
         else:
             await ctx.message.add_reaction(emoji='‼')
 
-    # TODO: need to fix command with new database format
     @perc.command()
     async def reset(self,ctx):
         '''Resets the leaderboard for this channel. (mod only)'''
         if ctx.message.author.guild_permissions.manage_messages:
             db = sqlite3.connect('main.sqlite')
             cursor = db.cursor()
-            cursor.execute(f"DELETE from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id}")
+            cursor.execute(f"DELETE from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id}")
             db.commit()
             db.close()
             await ctx.send("Ah.. Yes Delete the proof of the 20% Winrate.")
