@@ -64,13 +64,13 @@ class PercMgmt(commands.Cog):
 
     @perc.command()
     async def loss(self, ctx, *args):
-        '''For def/attack 5v5 losses. Worth slightly less points than a win.'''
+        '''For def/attack 5v5 losses. Worth slightly less points than win.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 'loss', 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def noContest(self, ctx, *args):
-        '''For attacks with 5vX wins.'''
+        '''For def/attacks with 5vX wins.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 'nocontest', 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
