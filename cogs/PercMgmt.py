@@ -3,21 +3,36 @@ from discord.ext import commands
 import asyncio
 import sqlite3
 
-def addToPlayers(guildID, channelID, value, *players):
+def addToPlayers(guildID, channelID, category:str, value:int, *players):
+    """
+    Adds {value} to the database for all {players} for the given {category}.
+    {category} must be one of: 'win', 'loss', 'nocontest'.
+    """
     db = sqlite3.connect('main.sqlite')
     cursor = db.cursor()
 
+    # ensure the category given is valid
+    categories = ['win', 'loss', 'nocontest']
+    category = category.lower()
+    if category not in categories:
+        print(f'ERROR: in addToPlayers, can\'t use category: {category}')
+        return
+
     for player in players:
         player = str(player).title()
-        cursor.execute(f"SELECT count from wordcount WHERE guild_id={guildID} AND channel_id={channelID} AND msg='{player}'")
+        cursor.execute(f"SELECT {category} from percscore WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
         result = cursor.fetchone()
+        # if nothing is found in database, it must be because this player name hasn't been added... so insert it with 0s 
         if result is None:
-            if (value <= 0):
-                continue
-            cursor.execute(f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({guildID},{channelID},'{player}','{value}')")
+            cursor.execute(f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({guildID},{channelID},'{player}',0,0,0)")
+        # if something is found, calculate the new value to update to
         else:
-            newval = result[0] + value
-            cursor.execute(f"UPDATE wordcount SET count={newval} WHERE guild_id={guildID} AND channel_id={channelID} AND msg='{player}'")
+            newValue = result[0] + value
+        # keep value >= 0
+        if newValue < 0:
+            newValue = 0
+        # update the value in the database
+        cursor.execute(f"UPDATE percscore SET {category}={newValue} WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
     db.commit()
     db.close()
     return
@@ -59,45 +74,40 @@ class PercMgmt(commands.Cog):
     @perc.command()
     async def win(self, ctx, *args):
         '''For perc def/attack 5v5 wins. Worth the most points.'''
-        addToPlayers(ctx.guild.id, ctx.channel.id, 2, *args)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 'win', 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def loss(self, ctx, *args):
         '''For def/attack 5v5 losses. Worth slightly less points than a win.'''
-        addToPlayers(ctx.guild.id, ctx.channel.id, 1, *args)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 'loss', 1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def noContest(self, ctx, *args):
         '''For attacks with 5vX wins.'''
-        addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 'nocontest', 1, *args)
         await ctx.message.add_reaction(emoji='✅')
-
-    # @perc.command()
-    # async def minus(self, ctx, *args):
-    #     '''Subtracts 1 point.'''
-    #     addToPlayers(ctx.guild.id, ctx.channel.id, -1, *args)
-    #     await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def removeWin(self, ctx, *args):
         '''To remove a 5v5 win.'''
-        # addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 'win', -1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
     @perc.command()
     async def removeLoss(self, ctx, *args):
         '''To remove a 5v5 loss.'''
-        # addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 'loss', -1, *args)
         await ctx.message.add_reaction(emoji='✅')
     
     @perc.command()
     async def removeNoContest(self, ctx, *args):
         '''To remove a 5vX win.'''
-        # addToPlayers(ctx.guild.id, ctx.channel.id, 0.5, *args)
+        addToPlayers(ctx.guild.id, ctx.channel.id, 'nocontest', -1, *args)
         await ctx.message.add_reaction(emoji='✅')
 
+    # TODO: need to fix command with new database format
     @perc.command()
     async def list(self, ctx):
         '''Lists the current leaderboard for the channel.'''
@@ -132,6 +142,7 @@ class PercMgmt(commands.Cog):
         else:
             await ctx.message.add_reaction(emoji='‼')
 
+    # TODO: need to fix command with new database format
     @perc.command()
     async def reset(self,ctx):
         '''Resets the leaderboard for this channel. (mod only)'''
@@ -156,22 +167,36 @@ class PercMgmt(commands.Cog):
             cursor = db.cursor()
             typo = str(typoname).title()
             fix = str(fixedname).title()
-            cursor.execute(f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{typo}'")
+
+            cursor.execute(f"SELECT win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{typo}'")
             result = cursor.fetchone()
+
             if not result:
                 embed.add_field(name="Error", value='Name not found in list. .perc edit <TypoName> <FixedName>')
                 await ctx.send(embed=embed)
             else:
-                countvalue = result[0]
-                cursor.execute(f"SELECT count from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{fix}'")
+                winValue = result[0]
+                lossValue = result[1]
+                nocontestValue = result[2]
+
+                # no get data for the correct spelling name
+                cursor.execute(f"SELECT win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
                 result = cursor.fetchone()
+
+                # if the correctly spelled name doesn't exist, we insert it into the db
                 if not result:
-                    cursor.execute(f"INSERT INTO wordcount (guild_id,channel_id,msg,count) VALUES({ctx.guild.id},{ctx.channel.id},'{fix}',{countvalue})")
+                    cursor.execute(f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({ctx.guild.id},{ctx.channel.id},'{fix}',{winValue},{lossValue},{nocontestValue})")
+                
+                # if the correctly spelled name DOES exist, need to add the values from the typo name and update correctly spelled entry
                 else:
-                    value = result[0] + countvalue
-                    cursor.execute(
-                        f"UPDATE wordcount SET count={value} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{fix}'")
-                cursor.execute(f"DELETE from wordcount WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND msg='{typo}'")
+                    winValue = winValue + result[0]
+                    lossValue = lossValue + result[1]
+                    nocontestValue = nocontestValue + result[2]
+                    # TODO: the three execute commands could probably be just one? but i dont know enough SQL so rip...
+                    cursor.execute(f"UPDATE percscore SET win={winValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                    cursor.execute(f"UPDATE percscore SET loss={lossValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                    cursor.execute(f"UPDATE percscore SET nocontest={nocontestValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                cursor.execute(f"DELETE from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{typo}'")
             db.commit()
             db.close()
             await ctx.message.add_reaction(emoji='✅')

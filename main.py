@@ -36,13 +36,13 @@ async def on_ready():
     db = sqlite3.connect('main.sqlite')
     cursor = db.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS wordcount(
+        CREATE TABLE IF NOT EXISTS percscore(
         guild_id INT,
         channel_id INT,
         player TEXT,
-        wins INT,
-        loses INT,
-        no_contests INT
+        win INT,
+        loss INT,
+        nocontest INT
         )
         ''')
 
