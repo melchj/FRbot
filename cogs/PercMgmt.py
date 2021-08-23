@@ -32,8 +32,9 @@ def addToPlayers(guildID, channelID, category:str, value:int, *players):
         else:
             newValue = result[0] + value
         # dont let the database get a negative
-        if newValue < 0:
-            newValue = 0
+        # if newValue < 0:
+            # newValue = 0
+
         # update the value in the database
         cursor.execute(f"UPDATE percscore SET {category}={newValue} WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
     db.commit()
@@ -47,7 +48,7 @@ class PercMgmt(commands.Cog):
         self.bot = bot
 
     # Commands
-    @commands.group(name='perc', invoke_without_command=True)
+    @commands.group(name='perc', invoke_without_command=True, case_insensitive=True)
     async def perc(self, ctx):
         """Do \".help perc\" for list of sub commands"""
         embed = discord.Embed(color=0xf5f2ca)
