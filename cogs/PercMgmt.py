@@ -1,4 +1,5 @@
 import discord
+from discord import channel
 from discord.ext import commands
 import asyncio
 import sqlite3
@@ -191,6 +192,59 @@ class PercMgmt(commands.Cog):
         else:
             embed.add_field(name="You cannot do that", value='Ping Louk or some shit')
             await ctx.send(embed=embed)
+
+    @perc.command(hidden=True)
+    async def wrlist(self, ctx, mentionedChannel:discord.TextChannel=None):
+        '''lists the full scores'''
+        if ctx.message.author.guild_permissions.manage_messages:
+            # return if no channel mentioned
+            if mentionedChannel is None:
+                await ctx.send("you need to tag a channel to look at. \".perc wrlist <#text-channel>\"")
+                return
+
+            db = sqlite3.connect('main.sqlite')
+            cursor = db.cursor()
+            # get everything from the database
+            cursor.execute(f"SELECT player, win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={mentionedChannel.id} ORDER BY win DESC")
+            result = cursor.fetchall()
+            if not result:
+                await ctx.send('There is no Data for this channel')
+            else:
+                embed = discord.Embed(color=0xf5f2ca)
+                # loop through everything returned from DB and calculate winrates
+                # wr = dict()
+                # for value in result:
+                #     wr[value[0]] = value[1] / (value[1] + value[2])
+                
+                # loop through the entries and make the strings to send
+                players = ''
+                winloss = ''
+                # wins = ''
+                # losses = ''
+                # nocontests = ''
+                winrates = ''
+                for value in result:
+                    players = players + value[0] + '\n'
+                    # wins = wins + str(value[1]) + '\n'
+                    # losses = losses + str(value[2]) + '\n'
+                    # nocontests = nocontests + str(value[3]) + '\n'
+                    winloss = winloss + f'{value[1]}-{value[2]}\n'
+                    wr = value[1] / (value[1] + value[2])
+                    winrates = winrates + f'{wr:.2f}' + '\n'
+                embed.add_field(name='Player', value=players, inline=True)
+                embed.add_field(name='W-L', value=winloss, inline=True)
+                # embed.add_field(name='W', value=wins, inline=True)
+                # embed.add_field(name='L', value=losses, inline=True)
+                # embed.add_field(name='5vX', value=nocontests, inline=True)
+                embed.add_field(name='WR%', value=winrates, inline=True)
+                embed.set_author(name='Free Ring Tings', icon_url=f'{ctx.guild.icon_url}')
+                embed.set_footer(text='\"No Contests (5vx)\" are ignored in winrate calculation')
+                embed.set_thumbnail(url=f'{ctx.guild.icon_url}')
+
+                await ctx.send(embed=embed)
+        else:
+            # if non-authorized member calls this, return as if it was incorrect subcommand
+            await self.perc(ctx)
 
 def setup(bot):
     bot.add_cog(PercMgmt(bot))
