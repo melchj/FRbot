@@ -224,6 +224,9 @@ class PercMgmt(commands.Cog):
                 # nocontests = ''
                 winrates = ''
                 for value in result:
+                    # skip if no wins + losses
+                    if (value[1] + value[2]) == 0:
+                        continue
                     players = players + value[0] + '\n'
                     # wins = wins + str(value[1]) + '\n'
                     # losses = losses + str(value[2]) + '\n'
