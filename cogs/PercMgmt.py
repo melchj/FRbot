@@ -229,7 +229,8 @@ class PercMgmt(commands.Cog):
                 players = ''
                 winloss = ''
                 winrates = ''
-                for item in sorted(resultDict.items(), key = lambda x: x[1][2], reverse=True):
+                # sort descending by one of the items in the tuple
+                for item in sorted(resultDict.items(), key = lambda x: x[1][0], reverse=True):
                     data = item[1]
                     players = players + item[0] + '\n'
                     winloss = winloss + f'{data[0]}-{data[1]}\n'
