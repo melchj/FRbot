@@ -114,11 +114,11 @@ class PercMgmt(commands.Cog):
             scores = ''
             for key in sorted(entries, key=entries.get, reverse=True):
                 players = players + key + '\n'
-                scores = scores + str(entries[key]) + '\n'
+                scores = scores + f'{(entries[key]):g}\n'
             embed.add_field(name='Player', value=players, inline=True)
             embed.add_field(name='Score', value=scores, inline=True)
             embed.set_author(name='Free Ring Tings', icon_url=f'{ctx.guild.icon_url}')
-            embed.set_footer(text='#FOKSYM')
+            embed.set_footer(text='#FOKBLITY')
             embed.set_thumbnail(url=f'{ctx.guild.icon_url}')
 
             await ctx.send(embed=embed)

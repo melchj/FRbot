@@ -34,15 +34,13 @@ class Core(commands.Cog):
         embed = discord.Embed(color=0xf5f2ca)
         embed.add_field(name="Krea", value='...is a commie')
         await ctx.send(embed=embed)
+    
+    @commands.command(hidden=True)
+    async def doublespeak(self, ctx):
+        embed = discord.Embed(color=0xf5f2ca)
+        embed.add_field(name="Double", value='miss u bb <3')
+        await ctx.send(embed=embed)
 
-
-    # Simple Clear Tool need to expand and add permissions to this.
-    #@commands.command()
-    #async def clear(self, ctx, amount=10):
-        #if ctx.message.author.guild_permissions.manage_messages:
-            #await ctx.channel.purge(limit=amount)
-        #else:
-            #await ctx.send("No can do bruh.")
 def setup(bot):
     bot.add_cog(Core(bot))
     print('Core is loaded')
