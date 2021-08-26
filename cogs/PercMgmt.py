@@ -109,7 +109,7 @@ class PercMgmt(commands.Cog):
             for value in result:
                 entries[value[0]] = value[1]*2 + value[2]*1 + value[3]*0.5
             
-            # loop through the entries IN DESCENDING ORDER and make the strings to send
+            # loop through the entries IN DESCENDING ORDER BY SCORE and make the strings to send
             players = ''
             scores = ''
             for key in sorted(entries, key=entries.get, reverse=True):
@@ -210,35 +210,34 @@ class PercMgmt(commands.Cog):
             if not result:
                 await ctx.send('There is no Data for this channel')
             else:
-                embed = discord.Embed(color=0xf5f2ca)
-                # loop through everything returned from DB and calculate winrates
-                # wr = dict()
-                # for value in result:
-                #     wr[value[0]] = value[1] / (value[1] + value[2])
                 
-                # loop through the entries and make the strings to send
-                players = ''
-                winloss = ''
-                # wins = ''
-                # losses = ''
-                # nocontests = ''
-                winrates = ''
+                # loop through everything returned from DB and organize it all into a dict
+                resultDict = dict()
                 for value in result:
-                    # skip if no wins + losses
+                    # skip this one if no wins + losses
                     if (value[1] + value[2]) == 0:
                         continue
-                    players = players + value[0] + '\n'
-                    # wins = wins + str(value[1]) + '\n'
-                    # losses = losses + str(value[2]) + '\n'
-                    # nocontests = nocontests + str(value[3]) + '\n'
-                    winloss = winloss + f'{value[1]}-{value[2]}\n'
+                    # parse from value object to build dict
+                    name = value[0]
+                    wins = value[1]
+                    losses = value[2]
                     wr = value[1] / (value[1] + value[2])
-                    winrates = winrates + f'{wr:.2f}' + '\n'
+                    # build dict
+                    resultDict[name] = (wins, losses, wr)
+
+                # loop through dict and build the strings to send
+                players = ''
+                winloss = ''
+                winrates = ''
+                for item in sorted(resultDict.items(), key = lambda x: x[1][2], reverse=True):
+                    data = item[1]
+                    players = players + item[0] + '\n'
+                    winloss = winloss + f'{data[0]}-{data[1]}\n'
+                    winrates = winrates + f'{data[2]:.2f}' + '\n'
+
+                embed = discord.Embed(color=0xf5f2ca)
                 embed.add_field(name='Player', value=players, inline=True)
                 embed.add_field(name='W-L', value=winloss, inline=True)
-                # embed.add_field(name='W', value=wins, inline=True)
-                # embed.add_field(name='L', value=losses, inline=True)
-                # embed.add_field(name='5vX', value=nocontests, inline=True)
                 embed.add_field(name='WR%', value=winrates, inline=True)
                 embed.set_author(name='Free Ring Tings', icon_url=f'{ctx.guild.icon_url}')
                 embed.set_footer(text='\"No Contests (5vx)\" are ignored in winrate calculation')
