@@ -68,7 +68,7 @@ async def on_message(message):
         await bot.process_commands(message)
         return
     
-    lookingFor = ['d-bk.net', 'dofusbook.net']
+    lookingFor = ['d-bk.net', 'dofusbook.net', 'dofusroom.com']
     replies = [
         'What\'s that?! Try this: https://dofuslab.io',
         '??? https://dofuslab.io',
