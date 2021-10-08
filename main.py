@@ -11,7 +11,7 @@ from dotenv.main import load_dotenv
 
 bot = commands.Bot(command_prefix='.', case_insensitive=True)
 
-cog_list = ['cogs.Core', 'cogs.PercMgmt', 'cogs.Tingo']
+cog_list = ['cogs.Core', 'cogs.PercMgmt', 'cogs.PrismMgmt', 'cogs.Tingo']
 
 def main():
     # load in the cogs
@@ -37,6 +37,18 @@ async def on_ready():
     cursor = db.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS percscore(
+        guild_id INT,
+        channel_id INT,
+        player TEXT,
+        win INT,
+        loss INT,
+        nocontest INT
+        )
+        ''')
+    
+    # add another table for prism scoreboard
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS prismscore(
         guild_id INT,
         channel_id INT,
         player TEXT,
