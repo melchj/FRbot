@@ -32,17 +32,12 @@ class Tingo(commands.Cog):
             await ctx.send('ERROR: .tingo capture needs exactly one image attached!')
             return
 
-        # save attached image (if it's a png... error if not)
-        # TODO: handle other image file types
+        # save attached image
         attachment = ctx.message.attachments[0]
         formattedDatetime = datetime.strftime(ctx.message.created_at, '%Y%m%dT%H%M%SZ')
-        imgPath = f"tingo/{formattedDatetime}.png"
-        if attachment.filename.endswith('.png'):
-            await attachment.save(imgPath)
-            print(f'attachment saved to {imgPath}')
-        else:
-            await ctx.send('ERROR: Chonk is lazy, this currently only works if the attached screenshot is a png file...')
-            return
+        extension = attachment.filename.split('.')[-1]
+        imgPath = f"tingo/{formattedDatetime}.{extension}"
+        await attachment.save(imgPath)
         
         # add to database
         db = sqlite3.connect('tingo.sqlite')
