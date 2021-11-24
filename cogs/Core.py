@@ -85,6 +85,7 @@ class Core(commands.Cog):
         embed.add_field(name="Jeffers", value='...is still in jail after insulting a policeman')
         await ctx.send(embed=embed)
 
+    # TODO: make this one choose a random copypasta from a set of them
     @commands.command(hidden=True)
     async def alaxel(self, ctx):
         async def sendEmbed(string):
@@ -129,7 +130,7 @@ class Core(commands.Cog):
     @commands.command(hidden=True)
     async def jash(self, ctx):
         embed = discord.Embed(color=0xf5f2ca)
-        embed.add_field(name="Jash", value='large mom')
+        embed.add_field(name="Jash", value="bro i've had a bag of Doritos and a kinder bueno in the last month")
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
