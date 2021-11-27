@@ -64,7 +64,7 @@ class Core(commands.Cog):
     @commands.command(hidden=True)
     async def vyxyn(self, ctx):
         embed = discord.Embed(color=0xf5f2ca)
-        embed.add_field(name="Vyxyn", value='... ok retard')
+        embed.add_field(name="Vyxyn", value='... ok r****d')
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
