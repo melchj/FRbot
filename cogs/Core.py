@@ -118,7 +118,7 @@ class Core(commands.Cog):
     @commands.command(hidden=True)
     async def monka(self, ctx):
         embed = discord.Embed(color=0xf5f2ca)
-        embed.add_field(name="Monka", value='let me tell you something')
+        embed.add_field(name="Monka", value='why is monka still here lmao')
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
