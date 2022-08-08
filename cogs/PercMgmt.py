@@ -1,10 +1,12 @@
+from datetime import datetime
 import discord
 from discord import channel
 from discord.ext import commands
 import asyncio
 import sqlite3
 
-def addToPlayers(guildID, channelID, category:str, value:int, *players):
+
+def addToPlayers(guildID, channelID, category: str, value: int, *players):
     """
     Adds {value} to the database for all {players} for the given {category}.
     {category} must be one of: 'win', 'loss', 'nocontest'.
@@ -21,12 +23,14 @@ def addToPlayers(guildID, channelID, category:str, value:int, *players):
 
     for player in players:
         player = str(player).title()
-        cursor.execute(f"SELECT {category} from percscore WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
+        cursor.execute(
+            f"SELECT {category} from percscore WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
         result = cursor.fetchone()
 
-        # if nothing is found in database, it must be because this player name hasn't been added... so insert it with 0s 
+        # if nothing is found in database, it must be because this player name hasn't been added... so insert it with 0s
         if result is None:
-            cursor.execute(f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({guildID},{channelID},'{player}',0,0,0)")
+            cursor.execute(
+                f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({guildID},{channelID},'{player}',0,0,0)")
             newValue = value
 
         # if something is found, calculate the new value to update to
@@ -37,10 +41,12 @@ def addToPlayers(guildID, channelID, category:str, value:int, *players):
             # newValue = 0
 
         # update the value in the database
-        cursor.execute(f"UPDATE percscore SET {category}={newValue} WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
+        cursor.execute(
+            f"UPDATE percscore SET {category}={newValue} WHERE guild_id={guildID} AND channel_id={channelID} AND player='{player}'")
     db.commit()
     db.close()
     return
+
 
 class PercMgmt(commands.Cog):
     """Perc Management"""
@@ -53,7 +59,8 @@ class PercMgmt(commands.Cog):
     async def perc(self, ctx):
         """Do \".help perc\" for list of sub commands"""
         embed = discord.Embed(color=0xf5f2ca)
-        embed.add_field(name='Perc Management', value='.help perc - for a list of Subcommands', inline=False)
+        embed.add_field(name='Perc Management',
+                        value='.help perc - for a list of Subcommands', inline=False)
         await ctx.send(embed=embed)
 
     @perc.command()
@@ -85,7 +92,7 @@ class PercMgmt(commands.Cog):
         '''To remove a 5v5 loss.'''
         addToPlayers(ctx.guild.id, ctx.channel.id, 'loss', -1, *args)
         await ctx.message.add_reaction(emoji='✅')
-    
+
     @perc.command()
     async def removeNoContest(self, ctx, *args):
         '''To remove a 5vX win.'''
@@ -98,7 +105,8 @@ class PercMgmt(commands.Cog):
         db = sqlite3.connect('main.sqlite')
         cursor = db.cursor()
         # get everything from the database
-        cursor.execute(f"SELECT player, win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} ORDER BY win DESC")
+        cursor.execute(
+            f"SELECT player, win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} ORDER BY win DESC")
         result = cursor.fetchall()
         if not result:
             await ctx.send('There is no Data for this channel')
@@ -108,7 +116,7 @@ class PercMgmt(commands.Cog):
             entries = dict()
             for value in result:
                 entries[value[0]] = value[1]*2 + value[2]*1 + value[3]*0.5
-            
+
             # loop through the entries IN DESCENDING ORDER BY SCORE and make the strings to send
             players = ''
             scores = ''
@@ -117,7 +125,8 @@ class PercMgmt(commands.Cog):
                 scores = scores + f'{(entries[key]):g}\n'
             embed.add_field(name='Player', value=players, inline=True)
             embed.add_field(name='Score', value=scores, inline=True)
-            embed.set_author(name='Free Ring Tings', icon_url=f'{ctx.guild.icon_url}')
+            embed.set_author(name='Free Ring Tings',
+                             icon_url=f'{ctx.guild.icon_url}')
             embed.set_footer(text='#FOKBLITY')
             embed.set_thumbnail(url=f'{ctx.guild.icon_url}')
 
@@ -133,12 +142,13 @@ class PercMgmt(commands.Cog):
             await ctx.message.add_reaction(emoji='‼')
 
     @perc.command()
-    async def reset(self,ctx):
+    async def reset(self, ctx):
         '''Resets the leaderboard for this channel. (mod only)'''
         if ctx.message.author.guild_permissions.manage_messages:
             db = sqlite3.connect('main.sqlite')
             cursor = db.cursor()
-            cursor.execute(f"DELETE from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id}")
+            cursor.execute(
+                f"DELETE from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id}")
             db.commit()
             db.close()
             await ctx.send("Ah.. Yes Delete the proof of the 20% Winrate.")
@@ -157,11 +167,13 @@ class PercMgmt(commands.Cog):
             typo = str(typoname).title()
             fix = str(fixedname).title()
 
-            cursor.execute(f"SELECT win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{typo}'")
+            cursor.execute(
+                f"SELECT win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{typo}'")
             result = cursor.fetchone()
 
             if not result:
-                embed.add_field(name="Error", value='Name not found in list. .perc edit <TypoName> <FixedName>')
+                embed.add_field(
+                    name="Error", value='Name not found in list. .perc edit <TypoName> <FixedName>')
                 await ctx.send(embed=embed)
             else:
                 winValue = result[0]
@@ -169,32 +181,39 @@ class PercMgmt(commands.Cog):
                 nocontestValue = result[2]
 
                 # no get data for the correct spelling name
-                cursor.execute(f"SELECT win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                cursor.execute(
+                    f"SELECT win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
                 result = cursor.fetchone()
 
                 # if the correctly spelled name doesn't exist, we insert it into the db
                 if not result:
-                    cursor.execute(f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({ctx.guild.id},{ctx.channel.id},'{fix}',{winValue},{lossValue},{nocontestValue})")
-                
+                    cursor.execute(
+                        f"INSERT INTO percscore (guild_id,channel_id,player,win,loss,nocontest) VALUES({ctx.guild.id},{ctx.channel.id},'{fix}',{winValue},{lossValue},{nocontestValue})")
+
                 # if the correctly spelled name DOES exist, need to add the values from the typo name and update correctly spelled entry
                 else:
                     winValue = winValue + result[0]
                     lossValue = lossValue + result[1]
                     nocontestValue = nocontestValue + result[2]
                     # TODO: the three execute commands could probably be just one? but i dont know enough SQL so rip...
-                    cursor.execute(f"UPDATE percscore SET win={winValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
-                    cursor.execute(f"UPDATE percscore SET loss={lossValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
-                    cursor.execute(f"UPDATE percscore SET nocontest={nocontestValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
-                cursor.execute(f"DELETE from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{typo}'")
+                    cursor.execute(
+                        f"UPDATE percscore SET win={winValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                    cursor.execute(
+                        f"UPDATE percscore SET loss={lossValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                    cursor.execute(
+                        f"UPDATE percscore SET nocontest={nocontestValue} WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{fix}'")
+                cursor.execute(
+                    f"DELETE from percscore WHERE guild_id={ctx.guild.id} AND channel_id={ctx.channel.id} AND player='{typo}'")
             db.commit()
             db.close()
             await ctx.message.add_reaction(emoji='✅')
         else:
-            embed.add_field(name="You cannot do that", value='Ping Louk or some shit')
+            embed.add_field(name="You cannot do that",
+                            value='Ping Louk or some shit')
             await ctx.send(embed=embed)
 
     @perc.command(hidden=True)
-    async def wrlist(self, ctx, mentionedChannel:discord.TextChannel=None):
+    async def wrlist(self, ctx, mentionedChannel: discord.TextChannel = None):
         '''lists the full scores'''
         if ctx.message.author.guild_permissions.manage_messages:
             # return if no channel mentioned
@@ -205,12 +224,13 @@ class PercMgmt(commands.Cog):
             db = sqlite3.connect('main.sqlite')
             cursor = db.cursor()
             # get everything from the database
-            cursor.execute(f"SELECT player, win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={mentionedChannel.id} ORDER BY win DESC")
+            cursor.execute(
+                f"SELECT player, win, loss, nocontest from percscore WHERE guild_id={ctx.guild.id} AND channel_id={mentionedChannel.id} ORDER BY win DESC")
             result = cursor.fetchall()
             if not result:
                 await ctx.send('There is no Data for this channel')
             else:
-                
+
                 # loop through everything returned from DB and organize it all into a dict
                 resultDict = dict()
                 for value in result:
@@ -230,7 +250,7 @@ class PercMgmt(commands.Cog):
                 winloss = ''
                 winrates = ''
                 # sort descending by one of the items in the tuple
-                for item in sorted(resultDict.items(), key = lambda x: x[1][0], reverse=True):
+                for item in sorted(resultDict.items(), key=lambda x: x[1][0], reverse=True):
                     data = item[1]
                     players = players + item[0] + '\n'
                     winloss = winloss + f'{data[0]}-{data[1]}\n'
@@ -240,14 +260,49 @@ class PercMgmt(commands.Cog):
                 embed.add_field(name='Player', value=players, inline=True)
                 embed.add_field(name='W-L', value=winloss, inline=True)
                 embed.add_field(name='WR%', value=winrates, inline=True)
-                embed.set_author(name='Free Ring Tings', icon_url=f'{ctx.guild.icon_url}')
-                embed.set_footer(text='\"No Contests (5vx)\" are ignored in winrate calculation')
+                embed.set_author(name='Free Ring Tings',
+                                 icon_url=f'{ctx.guild.icon_url}')
+                embed.set_footer(
+                    text='\"No Contests (5vx)\" are ignored in winrate calculation')
                 embed.set_thumbnail(url=f'{ctx.guild.icon_url}')
 
                 await ctx.send(embed=embed)
         else:
             # if non-authorized member calls this, return as if it was incorrect subcommand
             await self.perc(ctx)
+
+    # TODO: the following command needs a refactor, was written in a hurry :(
+    @perc.command()
+    async def recount(self, ctx, *args):
+        if ctx.message.author.guild_permissions.manage_messages:
+            async with ctx.channel.typing():
+                # addToPlayers(ctx.guild.id, ctx.channel.id, 'nocontest', -1, *args)
+                originalMessage = ctx.message.reference.resolved
+                startTime: datetime = originalMessage.created_at
+
+                # look at channel history up to the time of the referenced message
+                async for message in originalMessage.channel.history(limit=200, after=startTime, oldest_first=True):
+                    # check if its a ".perc xxx" command
+                    # TODO: probably a fancier way to do this with regex?
+                    msgText = message.content.lower()
+                    msgContents = msgText.split(' ')
+                    # TODO: call the actual command, not copy/paste from the command functions
+                    if (msgContents[0] == '.perc'):
+                        if (msgContents[1] == 'win'):
+                            addToPlayers(message.guild.id,
+                                         message.channel.id, 'win', 1, *msgContents[2:])
+                            await message.add_reaction(emoji='✅')
+                        elif (msgContents[1] == 'loss'):
+                            addToPlayers(ctx.guild.id, ctx.channel.id,
+                                         'loss', 1, *msgContents[2:])
+                            await message.add_reaction(emoji='✅')
+                        elif (msgContents[1] == 'nocontest'):
+                            addToPlayers(ctx.guild.id, ctx.channel.id,
+                                         'nocontest', 1, *msgContents[2:])
+                            await message.add_reaction(emoji='✅')
+
+                await ctx.message.add_reaction(emoji='✅')
+
 
 def setup(bot):
     bot.add_cog(PercMgmt(bot))
